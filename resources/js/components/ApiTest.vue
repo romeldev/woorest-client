@@ -156,7 +156,7 @@ export default {
             form: {
                 connections: [
                     { print_in: 'Caja', conn_type: 1, conn_name: 'Caja' },
-                    { print_in: 'Cocina', conn_type: 1, conn_name: 'Caja' },
+                    // { print_in: 'Cocina', conn_type: 1, conn_name: 'Caja' },
                 ],
                 type: 'image',
                 source: 'base64',

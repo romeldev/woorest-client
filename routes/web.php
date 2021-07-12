@@ -15,12 +15,11 @@ use Illuminate\Support\Facades\Route;
 
 header('Access-Control-Allow-Credentials: true');
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::view('/', 'welcome');
 
 Route::post('/service/print', 'ServiceController@print');
-Auth::routes();
+
+// Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
