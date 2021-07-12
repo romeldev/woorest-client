@@ -163,7 +163,7 @@ export default {
                 content: '',
             },
 
-            urlService: 'http://woorest-client.test/service/print',
+            urlService: '/service/print',
         }
     },
 
