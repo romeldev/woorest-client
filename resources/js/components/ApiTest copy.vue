@@ -18,7 +18,7 @@
                                     <tr>
                                         <th>conn_type</th>
                                         <th>conn_name</th>
-                                        <th>conn_target</th>
+                                        <th>conn_print_in</th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -43,7 +43,7 @@
                                         <td>
                                             <input type="text"
                                                 class="form-control form-control-sm"
-                                                v-model="item.conn_target"
+                                                v-model="item.print_in"
                                             >
                                         </td>
                                         <td>
@@ -55,11 +55,11 @@
                             </table>
                         </div>
 
-                        <!-- content_type -->
+                        <!-- type -->
                         <div class="col col-sm-12 form-group">
-                            <label>*content_type: {{ content_type }}</label>
-                            <select v-model="content_type" class="form-control form-control-sm">
-                                <option v-for="(type, key) in contentTypes"
+                            <label>*type: {{ form.type }}</label>
+                            <select v-model="form.type" class="form-control form-control-sm">
+                                <option v-for="(type, key) in fileTypes"
                                     :key="key"
                                     :value="type.value"
                                     v-html="type.text"
@@ -67,14 +67,14 @@
                             </select>
                         </div>
 
-                        <!-- content_source -->
+                        <!-- source -->
                         <div class="col col-sm-12 form-group">
-                            <label>*content_source: {{ content_source }}</label>
+                            <label>*source: {{ form.source }}</label>
                             <select class="form-control form-control-sm"
-                                v-model="content_source"
-                                @change="handleContentSource"
+                                v-model="form.source"
+                                @change="handleSouce"
                             >
-                                <option v-for="(type, key) in contentSources"
+                                <option v-for="(type, key) in fileSources"
                                     :key="key"
                                     :value="type.value"
                                     v-html="type.text"
@@ -88,7 +88,7 @@
                     <div class="row">
                         <!-- content file -->
                         <div class="col col-sm-12 form-group">
-                            <label>*content_body (max:5MB):</label> <br>
+                            <label>*content (max:5MB):</label> <br>
                             <input
                                 type="file"
                                 ref="contentFile"
@@ -98,11 +98,11 @@
 
                         <!-- content textarea -->
                         <div class="col col-sm-12 form-group">
-                            <label>*content_body:</label>
+                            <label>*Content:</label>
                             <textarea
                                 rows="5"
                                 class="form-control"
-                                v-model="content_body"
+                                v-model="form.content"
                             ></textarea>
                         </div>
 
@@ -110,10 +110,10 @@
                         <div class="col col-sm-12 form-group">
                             <label>copy a content:</label>
                             <ul>
-                                <li><a href="#" @click.prevent="copyContentBody(image64())">image64</a></li>
-                                <li><a href="#" @click.prevent="copyContentBody('http://sources.test/ticket.png')">ticket.png</a></li>
-                                <li><a href="#" @click.prevent="copyContentBody('http://sources.test/boleta.pdf')">boleta.pdf</a></li>
-                                <li><a href="#" @click.prevent="copyContentBody('http://sources.test/texto.txt')">text.txt</a></li>
+                                <li><a href="#" @click.prevent="copyContent(image64())">image64</a></li>
+                                <li><a href="#" @click.prevent="copyContent('http://sources.test/ticket.png')">ticket.png</a></li>
+                                <li><a href="#" @click.prevent="copyContent('http://sources.test/boleta.pdf')">boleta.pdf</a></li>
+                                <li><a href="#" @click.prevent="copyContent('http://sources.test/texto.txt')">text.txt</a></li>
                             </ul>
                         </div>
                     </div>
@@ -123,6 +123,7 @@
 
         <div class="card-footer">
             <button class="btn btn-sm btn-primary" @click="submitTest()">Submit</button>
+            <button class="btn btn-sm btn-primary" @click="submitTest2()">Submit V2</button>
         </div>
     </div>
 </template>
@@ -132,13 +133,13 @@
 export default {
     data() {
         return {
-            contentTypes: [ 
+            fileTypes: [ 
                 { value: 'image', text: 'IMAGEN' },
                 { value: 'pdf', text: 'PDF' },
                 { value: 'text', text: 'TEXTO' },
             ],
 
-            contentSourcesAll: [ 
+            fileSourcesAll: [ 
                 { value: 'base64', text: 'BASE64' },
                 { value: 'file', text: 'ARCHIVO' },
                 { value: 'url', text: 'URL' },
@@ -153,25 +154,24 @@ export default {
 
             form: {
                 connections: [
-                    { conn_target: 'Caja', conn_type: 1, conn_name: 'Caja' },
-                    { conn_target: 'Cocina', conn_type: 1, conn_name: 'Caja' },
+                    { print_in: 'Caja', conn_type: 1, conn_name: 'Caja' },
+                    // { print_in: 'Cocina', conn_type: 1, conn_name: 'Caja' },
                 ],
+                type: 'image',
+                source: 'base64',
+                content: '',
             },
-
-            content_type: 'image',
-            content_source: 'base64',
-            content_body: '',
 
             urlService: '/service/print',
         }
     },
 
     computed: {
-        contentSources() {
+        fileSources() {
             if( this.form.type==='text') {
-                return this.contentSourcesAll
+                return this.fileSourcesAll
             }else {
-                return this.contentSourcesAll.filter( i => i.value!='string')
+                return this.fileSourcesAll.filter( i => i.value!='string')
             }
         }
     },
@@ -188,37 +188,77 @@ export default {
             this.form.connections.splice(index, 1)
         },
 
-        copyContentBody( data ) {
+        copyContent( data ) {
             this.$refs.contentFile.value = null
-            this.content_body = data
+            this.form.content = data
         },
 
-        handleContentSource() {
-            this.content_body = null
+        handleSouce() {
+            this.form.content = null
             this.$refs.contentFile.value = null
         },
 
         handleFile( e ) {
-            this.content_body = e.target.files[0];
+            this.form.content = e.target.files[0];
         },
 
         async submitTest() {
             try {
                 let formData = new FormData();
+                formData.append('connections', JSON.stringify(this.form.connections));
+                formData.append('type', this.form.type);
+                formData.append('source', this.form.source);
+                formData.append('content', this.form.content);
+            
+                const { data } = await window.axios.post(this.urlService, formData, 
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                )
+                console.log(data)
+            } catch (error) {
+                if( !error.response || (error.response && error.response.status!==422)){
+                    this.$toast(error.message, 'error')
+                }
 
-                const connections = this.form.connections.map( item => {
+                if( error.response && error.response.status==422){
+                    let htmlErrors = ``
+                    Object.keys(error.response.data).forEach( key => {
+                        htmlErrors += `${error.response.data[key]}<br>`
+                    })
+                    this.$toast(htmlErrors, 'error')
+                }
+            }
+        },
+
+        async submitTest2() {
+            try {
+                let formData = new FormData();
+
+                const connections = this.form.connections.map( conn => {
                     return {
-                        conn_type: item.conn_type,
-                        conn_name: item.conn_name,
-                        conn_target: item.conn_target,
-                        content_type: this.content_type,
-                        content_source: this.content_source,
-                        content_body: this.content_body,
+                        print_in: conn.print_in,
+                        conn_type: conn.conn_type,
+                        conn_name: conn.conn_name,
+                        type: this.form.type,
+                        source: this.form.source,
+                        content: this.form.content,
+
+                        conn_type: null,
+                        conn_name: null,
+                        conn_message: null,
+                        content_type: null,
+                        content_source: null,
+                        content_body: null,
                     }
                 });
 
+                console.log(connections)
+
                 formData.append('connections', JSON.stringify(connections));
-                const { data } = await window.axios.post(this.urlService, formData, 
+                const { data } = await window.axios.post(this.urlService+'2', formData, 
                     {
                         headers: {
                             'Content-Type': 'multipart/form-data'

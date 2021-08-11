@@ -16,55 +16,82 @@ use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 
 class PrintService extends Model
 {
+    // public $connType;
+    // public $connName;
+    // public $connections;
+
     public $connType;
-
     public $connName;
+    public $connTarget;
 
-    public $connections;
+    public $contentType;
+    public $contentSource;
+    public $contentBody;
 
-    function __construct($connections) {
-        $this->connections = $connections;
+    function __construct( $data ) {
+        $this->connType = $data['conn_type'];
+        $this->connName = $data['conn_name'];
+        $this->connTarget = $data['conn_target'];
+        $this->contentType = $data['content_type'];
+        $this->contentSource = $data['content_source'];
+        $this->contentBody = $data['content_body'];
     }
 
-    public function print($type, $source, $content )
+
+    public static function PrintConnections($connections)
     {
-        if( $type== Param::TYPE_IMAGE) {
-            return $this->printImage($type, $source, $content);
+        $data1 = $connections[0];
+
+        $request = [];
+        foreach($connections as $data){
+            $request[] = (new PrintService($data))->print();
         }
 
-        if( $type== Param::TYPE_PDF) {
-            return $this->printPdf($type, $source, $content);
-        }
-
-        if( $type== Param::TYPE_TEXT) {
-            return $this->printText($type, $source, $content);
-        }
+        return $request;
     }
 
-    public function getPrintConnector( $connType, $connName ) {
+    public function getPrintConnector() {
 
         $connector = null;
-        if( $connType == Param::CONN_TYPE_NETWORK ){
-            $meta = explode(':', $connName);
+        if( $this->connType == Param::CONN_TYPE_NETWORK ){
+            $meta = explode(':', $this->connName);
             $ip = isset($meta[0])? trim($meta[0]): null;
             $port = isset($meta[1])? trim($meta[1]): null;
             $connector = new NetworkPrintConnector($ip, $port);
-        }else if( $connType == Param::CONN_TYPE_WINDOWS ){
-            $connector = new WindowsPrintConnector($connName);
-        }else if( $connType == Param::CONN_TYPE_FILE ){
-            $connector = new FilePrintConnector($connName);
+        }else if( $this->connType == Param::CONN_TYPE_WINDOWS ){
+            $connector = new WindowsPrintConnector($this->connName);
+        }else if( $this->connType == Param::CONN_TYPE_FILE ){
+            $connector = new FilePrintConnector($this->connName);
         }
         if( $connector==null) throw new \Exception("Print connection null");
         return $connector;
     }
 
-    public function printImage($type, $source, $content)
+    public function print()
+    {
+        if( $this->contentType == Param::CONTENT_TYPE_IMAGE) {
+            return $this->printImage();
+        }else {
+            return 'NOT_IMPLEMENT';
+        }
+
+        // if( $this->contentType == Param::CONTENT_TYPE_PDF) {
+        //     return $this->printPdf();
+        // }
+
+        // if( $this->contentType == Param::CONTENT_TYPE_TEXT) {
+        //     return $this->printText();
+        // }
+    }
+
+    public function printImage()
     {
         $res = [];
 
+        $targetTxt = $this->connTarget? $this->connTarget: $this->connName;
+
         try {
-            $filepath = $this->generateFile($type, $source, $content);
-            // dd($filepath);
+            $filepath = $this->generateFile($this->contentType, $this->contentSource, $this->contentBody);
             // $filepath = 'C:\laragon\www\sources\precuenta.jpg';
             // $filepath = 'C:\laragon\www\sources\ticket.jpg';
             // $filepath = 'C:\laragon\www\sources\ticket572.png';
@@ -75,24 +102,24 @@ class PrintService extends Model
 
             // dd( Printer::IMG_DOUBLE_HEIGHT );
 
-            foreach($this->connections as $connection){
-                $printer = new Printer($this->getPrintConnector($connection['conn_type'], $connection['conn_name']));
-                $printer->graphics($image);
-                $printer->cut();
-                $printer->close();
-            }
+            $printer = new Printer($this->getPrintConnector());
+            $printer->graphics($image);
+            $printer->cut();
+            $printer->close();
             // unlink($filepath);
             $res['status'] = true;
-            $res['message'] = 'Print ok!';
+            $res['message'] = "Print [$targetTxt]: OK!";
         } catch (\Exception $e) {
             $res['status'] = false;
-            $res['message'] = $e->getMessage();
+            $res['message'] = "Error [$targetTxt]: ".$e->getMessage();
         }
 
         return $res;
     }
 
-    public function printPdf($type, $source, $content)
+    
+
+    public function printPdf()
     {
         $filepath = $this->generateFile($type, $source, $content);
         $filepath = "C:\laragon\www\sources\boleta.pdf";
@@ -101,7 +128,7 @@ class PrintService extends Model
         dd($pages);
     }
 
-    public function printText($type, $source, $content)
+    public function printText()
     {
         $filepath = $this->generateFile($type, $source, $content);
         $contents = trim(file_get_contents($filepath));
@@ -113,7 +140,7 @@ class PrintService extends Model
     {
         $tmpDir = sys_get_temp_dir();
         $filepath = null;
-        if($source==Param::SOURCE_URL) {
+        if($source==Param::CONTENT_SOURCE_URL) {
             $url = $content;
             $info = pathinfo($url);
             $contents = file_get_contents($url);
@@ -128,7 +155,7 @@ class PrintService extends Model
             $filepath = Storage::disk('public')->path($path);
         }
 
-        if($source==Param::SOURCE_FILE) {
+        if($source==Param::CONTENT_SOURCE_FILE) {
             $file = $content;
             // $filepath = $file->path();
             $filename = $this->generateFilename($type);
@@ -136,7 +163,7 @@ class PrintService extends Model
             $filepath = Storage::disk('public')->path($path);
         }
 
-        if($source==Param::SOURCE_BASE64) {
+        if($source==Param::CONTENT_SOURCE_BASE64) {
             $contents64 = str_replace('data:image/png;base64,', '', $content);
             $contents = base64_decode($contents64);
             // $filename = 'file_'.date('U'). ($type==Param::TYPE_IMAGE? '.png': ($type==Param::TYPE_PDF?'.pdf': '.txt') );
@@ -149,7 +176,7 @@ class PrintService extends Model
             // dd($filepath);
         }
 
-        if($source==Param::SOURCE_STRING) {
+        if($source==Param::CONTENT_SOURCE_STRING) {
             $contents = $content;
             $filename = 'file_'.date('U').'.txt';
             $filepath = $tmpDir.'\\'.$filename;
@@ -166,7 +193,7 @@ class PrintService extends Model
 
         $filename = 'unknown';
 
-        if( $type==Param::TYPE_IMAGE){
+        if( $type==Param::CONTENT_TYPE_IMAGE){
             $filename = "{$prefix}{$id}.jpg";
         }
         return $filename;

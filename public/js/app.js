@@ -2057,12 +2057,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
-//
-//
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
-      fileTypes: [{
+      contentTypes: [{
         value: 'image',
         text: 'IMAGEN'
       }, {
@@ -2072,7 +2070,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         value: 'text',
         text: 'TEXTO'
       }],
-      fileSourcesAll: [{
+      contentSourcesAll: [{
         value: 'base64',
         text: 'BASE64'
       }, {
@@ -2097,24 +2095,27 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       }],
       form: {
         connections: [{
-          print_in: 'Caja',
+          conn_target: 'Caja',
           conn_type: 1,
           conn_name: 'Caja'
-        } // { print_in: 'Cocina', conn_type: 1, conn_name: 'Caja' },
-        ],
-        type: 'image',
-        source: 'base64',
-        content: ''
+        }, {
+          conn_target: 'Cocina',
+          conn_type: 1,
+          conn_name: 'Caja'
+        }]
       },
+      content_type: 'image',
+      content_source: 'base64',
+      content_body: '',
       urlService: '/service/print'
     };
   },
   computed: {
-    fileSources: function fileSources() {
+    contentSources: function contentSources() {
       if (this.form.type === 'text') {
-        return this.fileSourcesAll;
+        return this.contentSourcesAll;
       } else {
-        return this.fileSourcesAll.filter(function (i) {
+        return this.contentSourcesAll.filter(function (i) {
           return i.value != 'string';
         });
       }
@@ -2132,22 +2133,22 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     removeConnection: function removeConnection(index) {
       this.form.connections.splice(index, 1);
     },
-    copyContent: function copyContent(data) {
+    copyContentBody: function copyContentBody(data) {
       this.$refs.contentFile.value = null;
-      this.form.content = data;
+      this.content_body = data;
     },
-    handleSouce: function handleSouce() {
-      this.form.content = null;
+    handleContentSource: function handleContentSource() {
+      this.content_body = null;
       this.$refs.contentFile.value = null;
     },
     handleFile: function handleFile(e) {
-      this.form.content = e.target.files[0];
+      this.content_body = e.target.files[0];
     },
     submitTest: function submitTest() {
       var _this = this;
 
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.mark(function _callee() {
-        var formData, _yield$window$axios$p, data, htmlErrors;
+        var formData, connections, _yield$window$axios$p, data, htmlErrors;
 
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.wrap(function _callee$(_context) {
           while (1) {
@@ -2155,26 +2156,32 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
               case 0:
                 _context.prev = 0;
                 formData = new FormData();
-                formData.append('connections', JSON.stringify(_this.form.connections));
-                formData.append('type', _this.form.type);
-                formData.append('source', _this.form.source);
-                formData.append('content', _this.form.content);
-                _context.next = 8;
+                connections = _this.form.connections.map(function (item) {
+                  return {
+                    conn_type: item.conn_type,
+                    conn_name: item.conn_name,
+                    conn_target: item.conn_target,
+                    content_type: _this.content_type,
+                    content_source: _this.content_source,
+                    content_body: _this.content_body
+                  };
+                });
+                formData.append('connections', JSON.stringify(connections));
+                _context.next = 6;
                 return window.axios.post(_this.urlService, formData, {
                   headers: {
                     'Content-Type': 'multipart/form-data'
                   }
                 });
 
-              case 8:
+              case 6:
                 _yield$window$axios$p = _context.sent;
                 data = _yield$window$axios$p.data;
-                console.log(data);
-                _context.next = 17;
+                _context.next = 14;
                 break;
 
-              case 13:
-                _context.prev = 13;
+              case 10:
+                _context.prev = 10;
                 _context.t0 = _context["catch"](0);
 
                 if (!_context.t0.response || _context.t0.response && _context.t0.response.status !== 422) {
@@ -2190,12 +2197,12 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   _this.$toast(htmlErrors, 'error');
                 }
 
-              case 17:
+              case 14:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 13]]);
+        }, _callee, null, [[0, 10]]);
       }))();
     },
     image64: function image64() {
@@ -38810,19 +38817,19 @@ var render = function() {
                             {
                               name: "model",
                               rawName: "v-model",
-                              value: item.print_in,
-                              expression: "item.print_in"
+                              value: item.conn_target,
+                              expression: "item.conn_target"
                             }
                           ],
                           staticClass: "form-control form-control-sm",
                           attrs: { type: "text" },
-                          domProps: { value: item.print_in },
+                          domProps: { value: item.conn_target },
                           on: {
                             input: function($event) {
                               if ($event.target.composing) {
                                 return
                               }
-                              _vm.$set(item, "print_in", $event.target.value)
+                              _vm.$set(item, "conn_target", $event.target.value)
                             }
                           }
                         })
@@ -38851,7 +38858,9 @@ var render = function() {
             ]),
             _vm._v(" "),
             _c("div", { staticClass: "col col-sm-12 form-group" }, [
-              _c("label", [_vm._v("*type: " + _vm._s(_vm.form.type))]),
+              _c("label", [
+                _vm._v("*content_type: " + _vm._s(_vm.content_type))
+              ]),
               _vm._v(" "),
               _c(
                 "select",
@@ -38860,8 +38869,8 @@ var render = function() {
                     {
                       name: "model",
                       rawName: "v-model",
-                      value: _vm.form.type,
-                      expression: "form.type"
+                      value: _vm.content_type,
+                      expression: "content_type"
                     }
                   ],
                   staticClass: "form-control form-control-sm",
@@ -38875,17 +38884,13 @@ var render = function() {
                           var val = "_value" in o ? o._value : o.value
                           return val
                         })
-                      _vm.$set(
-                        _vm.form,
-                        "type",
-                        $event.target.multiple
-                          ? $$selectedVal
-                          : $$selectedVal[0]
-                      )
+                      _vm.content_type = $event.target.multiple
+                        ? $$selectedVal
+                        : $$selectedVal[0]
                     }
                   }
                 },
-                _vm._l(_vm.fileTypes, function(type, key) {
+                _vm._l(_vm.contentTypes, function(type, key) {
                   return _c("option", {
                     key: key,
                     domProps: {
@@ -38899,7 +38904,9 @@ var render = function() {
             ]),
             _vm._v(" "),
             _c("div", { staticClass: "col col-sm-12 form-group" }, [
-              _c("label", [_vm._v("*source: " + _vm._s(_vm.form.source))]),
+              _c("label", [
+                _vm._v("*content_source: " + _vm._s(_vm.content_source))
+              ]),
               _vm._v(" "),
               _c(
                 "select",
@@ -38908,8 +38915,8 @@ var render = function() {
                     {
                       name: "model",
                       rawName: "v-model",
-                      value: _vm.form.source,
-                      expression: "form.source"
+                      value: _vm.content_source,
+                      expression: "content_source"
                     }
                   ],
                   staticClass: "form-control form-control-sm",
@@ -38924,19 +38931,15 @@ var render = function() {
                             var val = "_value" in o ? o._value : o.value
                             return val
                           })
-                        _vm.$set(
-                          _vm.form,
-                          "source",
-                          $event.target.multiple
-                            ? $$selectedVal
-                            : $$selectedVal[0]
-                        )
+                        _vm.content_source = $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
                       },
-                      _vm.handleSouce
+                      _vm.handleContentSource
                     ]
                   }
                 },
-                _vm._l(_vm.fileSources, function(type, key) {
+                _vm._l(_vm.contentSources, function(type, key) {
                   return _c("option", {
                     key: key,
                     domProps: {
@@ -38954,7 +38957,7 @@ var render = function() {
         _c("div", { staticClass: "col col-sm-6" }, [
           _c("div", { staticClass: "row" }, [
             _c("div", { staticClass: "col col-sm-12 form-group" }, [
-              _c("label", [_vm._v("*content (max:5MB):")]),
+              _c("label", [_vm._v("*content_body (max:5MB):")]),
               _vm._v(" "),
               _c("br"),
               _vm._v(" "),
@@ -38966,26 +38969,26 @@ var render = function() {
             ]),
             _vm._v(" "),
             _c("div", { staticClass: "col col-sm-12 form-group" }, [
-              _c("label", [_vm._v("*Content:")]),
+              _c("label", [_vm._v("*content_body:")]),
               _vm._v(" "),
               _c("textarea", {
                 directives: [
                   {
                     name: "model",
                     rawName: "v-model",
-                    value: _vm.form.content,
-                    expression: "form.content"
+                    value: _vm.content_body,
+                    expression: "content_body"
                   }
                 ],
                 staticClass: "form-control",
                 attrs: { rows: "5" },
-                domProps: { value: _vm.form.content },
+                domProps: { value: _vm.content_body },
                 on: {
                   input: function($event) {
                     if ($event.target.composing) {
                       return
                     }
-                    _vm.$set(_vm.form, "content", $event.target.value)
+                    _vm.content_body = $event.target.value
                   }
                 }
               })
@@ -39003,7 +39006,7 @@ var render = function() {
                       on: {
                         click: function($event) {
                           $event.preventDefault()
-                          _vm.copyContent(_vm.image64())
+                          _vm.copyContentBody(_vm.image64())
                         }
                       }
                     },
@@ -39019,7 +39022,7 @@ var render = function() {
                       on: {
                         click: function($event) {
                           $event.preventDefault()
-                          return _vm.copyContent(
+                          return _vm.copyContentBody(
                             "http://sources.test/ticket.png"
                           )
                         }
@@ -39037,7 +39040,7 @@ var render = function() {
                       on: {
                         click: function($event) {
                           $event.preventDefault()
-                          return _vm.copyContent(
+                          return _vm.copyContentBody(
                             "http://sources.test/boleta.pdf"
                           )
                         }
@@ -39055,7 +39058,7 @@ var render = function() {
                       on: {
                         click: function($event) {
                           $event.preventDefault()
-                          return _vm.copyContent(
+                          return _vm.copyContentBody(
                             "http://sources.test/texto.txt"
                           )
                         }
@@ -39098,7 +39101,7 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("th", [_vm._v("conn_name")]),
         _vm._v(" "),
-        _c("th", [_vm._v("conn_print_in")]),
+        _c("th", [_vm._v("conn_target")]),
         _vm._v(" "),
         _c("th")
       ])

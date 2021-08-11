@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <link rel="icon" href="{{ asset('/img/logo-app.svg') }}" type="image/svg+xml">
+        <link rel="shortcut-icon" href="{{ asset('/img/logo-app.svg') }}" type="image/svg+xml">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 

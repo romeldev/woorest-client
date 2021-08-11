@@ -21,6 +21,85 @@ class ServiceController extends Controller
                 })->toArray();
             }
         }
+
+        if( isset($request['content']) && $request['content']=='null') $request['content'] = null;
+
+        $contentTypes = Param::contentTypes()->pluck('value')->toArray();
+        $contentSources = Param::contentSources()->where('value', '<>', Param::CONTENT_SOURCE_STRING)->pluck('value')->toArray();
+        $contentSourcesAll = Param::contentSources()->pluck('value')->toArray();
+        $connTypes = Param::connTypes()->pluck('value')->toArray();
+
+        $rules = [
+            'connections' => 'required|array|min:1',
+            'connections.*.conn_type' => 'required|in:'.implode(',', $connTypes),
+            'connections.*.conn_name' => 'required',
+            'connections.*.content_type' => 'required|in:'.implode(',', $contentTypes),
+        ];
+
+        foreach($request->connections as $key => $conn)
+        {
+            $contentType = isset($conn['content_type'])? $conn['content_type']: null;
+            $contentSource = isset($conn['content_source'])? $conn['content_source']: null;
+
+            if( $contentType==Param::CONTENT_TYPE_IMAGE || $contentType==Param::CONTENT_TYPE_PDF) {
+                $rules["connections.$key.content_source"] = 'required|in:'.implode(',', $contentSources);
+            }
+
+            if( $contentType==Param::CONTENT_TYPE_TEXT) {
+                $rules["connections.$key.content_source"] = 'required|in:'.implode(',', $contentSourcesAll);
+            }
+    
+            if( $contentType==Param::CONTENT_TYPE_IMAGE ) {
+                if ( $contentSource==Param::CONTENT_SOURCE_BASE64){
+                    $rules["connections.$key.content_body"] = 'required';
+                }else if ( $contentSource==Param::CONTENT_SOURCE_URL){
+                    $rules["connections.$key.content_body"] = 'required|url';
+                }else if ( $contentSource==Param::CONTENT_SOURCE_FILE){
+                    $rules["connections.$key.content_body"] = 'required|file|max:5120|mimes:jpg,png,jpeg';
+                }
+            }
+    
+            if( $contentType==Param::CONTENT_TYPE_PDF ) {
+                if ( $contentSource==Param::CONTENT_SOURCE_BASE64){
+                    $rules["connections.$key.content_body"] =  'required';
+                }else if ( $contentSource==Param::CONTENT_SOURCE_URL){
+                    $rules["connections.$key.content_body"] = 'required|url';
+                }else if ( $contentSource==Param::CONTENT_SOURCE_FILE){
+                    $rules["connections.$key.content_body"] = 'required|file|max:5120|mimes:pdf';
+                }
+            }
+    
+            if( $contentType==Param::CONTENT_TYPE_TEXT ) {
+                if ( $contentSource==Param::CONTENT_SOURCE_BASE64 ||  $contentSource==Param::CONTENT_SOURCE_STRING){
+                    $rules["connections.$key.content_body"] = 'required';
+                }else if ( $contentSource==Param::CONTENT_SOURCE_URL){
+                    $rules["connections.$key.content_body"] = 'required|url';
+                }else if ( $contentSource==Param::CONTENT_SOURCE_FILE){
+                    $rules["connections.$key.content_body"] = 'required|file|max:5120|mimes:txt';
+                }
+            }
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if( $validator->fails() ) return response()->json($validator->messages(), 422);
+
+        $response = PrintService::PrintConnections($request->connections);
+
+        return $response;
+    }
+
+    public function printOld(Request $request)
+    {
+        // return $request->connections;
+
+        if( !is_array($request->connections)){
+            if( $data = json_decode($request->connections) ){
+                $request['connections'] = collect($data)->map(function($item){
+                    return (array)$item;
+                })->toArray();
+            }
+        }
         
         if( isset($request['content']) && $request['content']=='null') $request['content'] = null;
 
