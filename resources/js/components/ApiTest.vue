@@ -123,6 +123,8 @@
 
         <div class="card-footer">
             <button class="btn btn-sm btn-primary" @click="submitTest()">Submit</button>
+
+            <textarea class="form-control form-control-sm mt-3"  readonly rows="10" v-html="response"></textarea>
         </div>
     </div>
 </template>
@@ -163,6 +165,9 @@ export default {
             content_body: '',
 
             urlService: '/service/print',
+
+
+            response: null,
         }
     },
 
@@ -204,6 +209,8 @@ export default {
 
         async submitTest() {
             try {
+                this.response = null;
+
                 let formData = new FormData();
 
                 const connections = this.form.connections.map( item => {
@@ -225,6 +232,8 @@ export default {
                         }
                     }
                 )
+
+                this.response = data
             } catch (error) {
                 if( !error.response || (error.response && error.response.status!==422)){
                     this.$toast(error.message, 'error')
